@@ -411,7 +411,7 @@ export default function Home() {
                 onClick={confirmGroundTruth}
                 className="bg-zinc-900 text-white px-6 py-2 rounded font-medium text-sm hover:bg-zinc-800 transition-colors"
               >
-                Confirm &amp; Generate SITREP
+                Confirm Ground Truth
               </button>
             </div>
           </div>

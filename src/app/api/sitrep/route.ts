@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { openrouter, MODELS } from "@/lib/openrouter";
+import { BASE_CONTEXT } from "@/lib/base-context";
 
 const SITREP_SYSTEM_PROMPT = `You are an intelligence analyst writing a formal, precise situation report (SITREP) on the Iran-Israel-US military conflict. Model your writing on ISW/Critical Threats Project reports. Your tone is analytical, authoritative, and precise — you assess, evaluate, and draw inferences from available evidence.
 
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
   const result = await generateText({
     model: openrouter(MODELS.gemini),
     system: SITREP_SYSTEM_PROMPT,
-    prompt: `Transform the following confirmed ground truth into a structured SITREP. Return ONLY valid JSON, no markdown fences.\n\n${groundTruth}`,
+    prompt: `Transform the following confirmed ground truth into a structured SITREP. Return ONLY valid JSON, no markdown fences.\n\n${BASE_CONTEXT}\n\n=== CURRENT SITUATION UPDATE ===\n\n${groundTruth}`,
   });
 
   let sitrep: Record<string, string>;

@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { openrouter, MODELS } from "@/lib/openrouter";
 import { LENSES } from "@/lib/types";
+import { BASE_CONTEXT } from "@/lib/base-context";
 
 export async function POST(request: Request) {
   const { groundTruth } = await request.json();
@@ -28,7 +29,7 @@ You will receive a confirmed ground truth document about the Iran-Israel-US conf
 4. **Next 1 Year** — long-term outlook
 
 For each timeframe, provide structured analysis with specific scenarios. Be detailed and substantive.`,
-        prompt: `=== CONFIRMED GROUND TRUTH ===\n\n${groundTruth}`,
+        prompt: `=== CONFLICT BACKGROUND ===\n\n${BASE_CONTEXT}\n\n=== CONFIRMED GROUND TRUTH ===\n\n${groundTruth}`,
       });
       return [lens.id, result.text] as const;
     })
