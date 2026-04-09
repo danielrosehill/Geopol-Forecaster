@@ -246,8 +246,10 @@ def write_run_index(run_dir: Path, out_dir: Path, stats: dict) -> None:
     )
     lines.append("## Final report\n")
     lines.append(
-        "- [Chairman report (full markdown)](chairman_report)\n"
-        "- [Intel-style PDF](intel_report.pdf)\n"
+        "- [Chairman report (markdown)](chairman_report)\n"
+        "- [Intel-style PDF — executive briefing](intel_report.pdf) · "
+        "[Full transcript PDF — archival](full_transcript.pdf) · "
+        "[Combined PDF](combined_report.pdf) (briefing + archival)\n"
         "- [Experiment notes](experiment_notes)\n"
     )
     lines.append("## Stage A — actor simulation\n")
@@ -274,6 +276,7 @@ COPY_FILES = [
     "simulation.json",
     "intel_report.pdf",
     "full_transcript.pdf",
+    "combined_report.pdf",
 ]
 
 

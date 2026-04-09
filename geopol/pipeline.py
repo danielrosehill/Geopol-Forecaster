@@ -8,12 +8,15 @@ Render:  Typst source → PDF → reports/<ts>/
 from __future__ import annotations
 
 import asyncio
+import shutil
+import subprocess
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .config import REPORTS_DIR, require_keys
+from .config import REPO_ROOT, REPORTS_DIR, require_keys
 from .council import run_council
 from .news.fresh_data import gather_fresh_data
 from .render import build_typst_source, render_pdf
@@ -58,24 +61,9 @@ async def run_pipeline(question: str, *, skip_pdf: bool = False) -> PipelineResu
         )
     )
 
-    print(f"[render] building Typst source …")
-    typ = build_typst_source(
-        question=question,
-        session_id=session_id,
-        created_at=created_at,
-        fresh=fresh,
-        sim=sim,
-        chairman_report_md=council.final_report_markdown,
-    )
-    (out_dir / "report.typ").write_text(typ)
-
     pdf_path: Path | None = None
     if not skip_pdf:
-        try:
-            pdf_path = render_pdf(typ, out_dir)
-            print(f"[render] PDF → {pdf_path}")
-        except TypstNotInstalled as e:
-            print(f"[render] {e} — skipping PDF, .typ source is saved")
+        pdf_path = _render_and_publish_artifacts(out_dir)
 
     return PipelineResult(
         session_id=session_id,
@@ -83,6 +71,62 @@ async def run_pipeline(question: str, *, skip_pdf: bool = False) -> PipelineResu
         markdown_path=out_dir / "chairman_report.md",
         pdf_path=pdf_path,
     )
+
+
+def _render_and_publish_artifacts(out_dir: Path) -> Path | None:
+    """Run the three renderers + publish_run.py. Failures are non-fatal.
+
+    Produces in order:
+      - intel_report.pdf   (executive briefing)
+      - full_transcript.pdf (archival — every actor, turn, lens, review)
+      - combined_report.pdf (pdfunite of the two)
+    Then calls scripts/publish_run.py to fan out into docs/runs/<id>/.
+    """
+    scripts = REPO_ROOT / "scripts"
+    combined: Path | None = None
+
+    def _run(name: str, cmd: list[str]) -> bool:
+        try:
+            subprocess.run(cmd, check=True)
+            return True
+        except FileNotFoundError as e:
+            print(f"[render] {name}: missing tool — {e}")
+        except subprocess.CalledProcessError as e:
+            print(f"[render] {name}: failed (exit {e.returncode})")
+        return False
+
+    print(f"[render] intel_report.pdf …")
+    _run(
+        "intel_report",
+        [sys.executable, str(scripts / "render_intel_report.py"), str(out_dir)],
+    )
+
+    print(f"[render] full_transcript.pdf …")
+    _run(
+        "full_transcript",
+        [sys.executable, str(scripts / "render_full_transcript.py"), str(out_dir)],
+    )
+
+    intel = out_dir / "intel_report.pdf"
+    full = out_dir / "full_transcript.pdf"
+    if intel.exists() and full.exists() and shutil.which("pdfunite"):
+        combined = out_dir / "combined_report.pdf"
+        print(f"[render] combined_report.pdf …")
+        _run("combined", ["pdfunite", str(intel), str(full), str(combined)])
+    elif not shutil.which("pdfunite"):
+        print("[render] pdfunite not installed — skipping combined PDF")
+
+    print(f"[publish] fanning out to docs/runs/{out_dir.name}/ …")
+    _run(
+        "publish_run",
+        [sys.executable, str(scripts / "publish_run.py"), str(out_dir)],
+    )
+
+    # Prefer the combined artifact as the canonical pdf_path, then intel, then full.
+    for candidate in (combined, intel, full):
+        if candidate and candidate.exists():
+            return candidate
+    return None
 
 
 def run_pipeline_sync(question: str, *, skip_pdf: bool = False) -> PipelineResult:
