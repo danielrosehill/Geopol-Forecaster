@@ -2,28 +2,34 @@
 
 # Geopol Forecaster
 
-Two-stage geopolitical forecasting experiment:
+A two-stage geopolitical forecasting pipeline. Given a forecast question and
+live news grounding, it simulates a roster of ~40 actors deciding how they
+would respond over four timesteps, then runs a six-lens analytical council
+that independently answers, cross-reviews, and synthesises a final report.
 
-1. **Stage A — actor simulation.** Referee + per-actor `Player` loop over ~10
-   decision-makers (Khamenei, Netanyahu, Trump, IRGC, Hezbollah, Houthis, MbS,
-   Erdoğan, Qatari mediator, CENTCOM). Pattern borrowed from IQTLabs'
-   [snowglobe](https://github.com/IQTLabs/snowglobe) (`examples/ac_sim.py`).
-2. **Stage B — lens council.** 6 lens directives deliberate via
+Every perspective is published — per-actor trajectories, per-turn world
+states, lens answers, cross-reviews — alongside executive-briefing and
+full-archival PDFs.
+
+- **Published runs**: https://danielrosehill.github.io/Geopol-Forecaster/
+
+## Pipeline
+
+1. **Stage A — actor simulation.** A referee + per-actor loop inspired by
+   IQTLabs' [snowglobe](https://github.com/IQTLabs/snowglobe)
+   (`examples/ac_sim.py`). Every actor commits privately and independently;
+   the referee narrates the world state between turns using
+   authority-precedence conflict resolution. Actors see only the
+   referee-authored state and their own private memory.
+2. **Stage B — lens council.** Six lens directives (neutral, pessimistic,
+   optimistic, blindsides, probabilistic, historical) deliberate via
    karpathy's [llm-council](https://github.com/karpathy/llm-council) 3-stage
-   protocol (parallel query → blind peer review → chairman synthesis) with a
-   frozen bundle of base context + Tavily/RSS/ISW fresh data + Stage A's
+   protocol — parallel query → blind peer review → chairman synthesis — with
+   a frozen bundle of base context + Tavily/RSS/ISW fresh data + Stage A's
    simulation summary. The chairman writes the final report directly.
 
-Output: markdown + Typst-rendered PDF in `reports/<timestamp>/`. No frontend.
-
-See `docs/UPSTREAM-COMPONENTS.md` for how we use each upstream and what we
-changed.
-
-## Status
-
-The TypeScript/Next.js prototype lives in `src/` and is frozen — it's kept
-only as reference material while the Python port reaches parity and will be
-deleted afterwards.
+Grounding is a frozen bundle — no per-actor re-searching — so every member
+of the ensemble reasons from an identical world state.
 
 ## Running
 
@@ -31,52 +37,38 @@ deleted afterwards.
 uv sync
 cp .env.example .env     # fill in OPENROUTER_API_KEY and TAVILY_API_KEY
 uv run geopol smoketest
-uv run geopol forecast "Will the Iran-Israel ceasefire hold through Q3 2026?"
+uv run geopol forecast "Will the April 2026 ceasefire hold through +1 month?"
 ```
 
-Outputs land in `reports/<UTC timestamp>/`:
+Each run lands in `reports/<UTC timestamp>/` and is automatically rendered
+to three PDFs and fanned out to `docs/runs/<id>/` for the Jekyll site:
 
-- `chairman_report.md` — final report (also rendered to PDF)
-- `report.pdf` — Typst-rendered PDF (requires `typst` on PATH)
-- `report.typ` — Typst source
+- `chairman_report.md` — final synthesised forecast
+- `intel_report.pdf` — executive briefing (~15 pages: cover + BLUF + chairman + colophon)
+- `full_transcript.pdf` — archival (~300+ pages: every actor, turn, lens, review)
+- `combined_report.pdf` — briefing + archival merged
 - `fresh_data.json` — frozen Tavily + RSS/ISW bundle
-- `simulation.json` — all Stage A runs + summary
+- `simulation.json` — full Stage A transcript
 - `stage1_answers.md`, `stage2_reviews.md` — council trace
 
 ## Layout
 
 ```
 geopol/
-  config.py          Models, MC runs, paths. One constant per role.
-  llm.py             OpenRouter async client. Single key, single router.
-  base_context.py    Static conflict background (ported from src/lib/base-context.ts).
-  schemas.py         Pydantic schemas (ported from src/lib/schemas.ts, extended).
-  news/
-    rss.py           Times of Israel + JPost RSS, ISW WordPress API.
-    tavily.py        Tavily grounded-answer client.
-    fresh_data.py    Single context-gathering agent → frozen FreshData bundle.
-  actors/
-    roster.py        ~10 persona briefs for the simulation.
-  simulation/
-    engine.py        Stage A. Control/Player loop + summariser.
-  council/
-    lenses.py        The 6 lens directives (neutral/pessimistic/…/historical).
-    protocol.py      Stage B. 3-stage llm-council protocol, lens-flavoured.
-  render/
-    typst.py         Markdown → Typst source.
-    pdf.py           Shell out to the typst CLI.
+  config.py          Models, MC runs, paths.
+  llm.py             OpenRouter async client.
+  base_context.py    Static conflict background.
+  schemas.py         Pydantic schemas.
+  news/              RSS + Tavily + frozen fresh-data bundle.
+  actors/            Persona briefs for the simulation roster.
+  simulation/        Stage A — control/player loop + summariser.
+  council/           Stage B — 6 lens directives + 3-stage protocol.
+  render/            Markdown → Typst source → PDF.
   pipeline.py        End-to-end orchestrator.
   cli.py             `geopol forecast` / `geopol smoketest`.
+scripts/
+  render_intel_report.py      Executive-briefing PDF.
+  render_full_transcript.py   Archival full-transcript PDF.
+  publish_run.py              Fan out a run into docs/runs/<id>/.
+  webui.py                    Stdlib web UI for submitting prompts.
 ```
-
-## Locked decisions
-
-- Language: Python, `uv` + `pyproject.toml`.
-- All LLM calls via OpenRouter. Single `OPENROUTER_API_KEY`. No provider SDKs.
-- Grounding: Tavily only. No `gpt-researcher`, no Gemini `googleSearch`.
-- Output: markdown + Typst PDF in `reports/`. No frontend, no SQLite.
-- First run: Sonnet 4.6 everywhere, Monte Carlo N=1, 4 timesteps, all 6 lenses.
-
-See the sibling
-[`Geopol-Forecaster-Planning`](../Geopol-Forecaster-Planning) repo for the
-full architectural rationale.
