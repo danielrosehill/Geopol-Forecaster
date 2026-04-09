@@ -1,107 +1,78 @@
 ---
 layout: default
-title: "Run 2026-04-09_224838Z — Iran–Israel–US Ceasefire"
+title: "Run 2026-04-09_224838Z"
 ---
 
-# Run 2026-04-09_224838Z
 
-**Question.** Iran, Israel, and the US just announced a two-week ceasefire
-on April 8, 2026. Will it hold at +24h, +72h, +1 week, +1 month, and how
-does the conflict evolve from here?
+# Run `2026-04-09_224838Z`
 
-**Run date.** 2026-04-10
-**Model.** `anthropic/claude-sonnet-4.5` via OpenRouter
-**Stage A:** 38 actors × 4 timesteps × 1 MC run
-**Stage B:** 6 council lenses, 2-stage protocol, chairman synthesis
-**Grounding:** Tavily (4 queries) + RSS/ISW, frozen to Turn-0 world state
+**Iran–Israel–US Ceasefire Durability Assessment**
 
----
+Stage A simulated **40 actors** across **4 timesteps**. Stage B ran a **6-lens council** with **6 cross-reviews**.
 
-## Headline forecast
+## Final report
 
-| Window | P(ceasefire holds) | 90% credible range |
-|---|---|---|
-| +24 hours | 55% | 42–68% |
-| +72 hours | 22% | 15–32% |
-| +1 week   | 10% | 6–16% |
-| +1 month  | 4%  | 2–8% |
+- [Chairman report (full markdown)](chairman_report)
+- [Intel-style PDF](intel_report.pdf)
+- [Experiment notes](experiment_notes)
 
-Council verdict: **will not survive beyond 72 hours**. The Lebanon scope
-ambiguity is treated as a weaponised structural fault line, not a drafting
-error. Full reasoning in the artifacts below.
+## Stage A — actor simulation
 
----
+- [All actors](actors/) — one page per actor, all turns
+- [All turns](turns/) — world state + all actions + referee narration
 
-## Artifacts
+## Stage B — council
 
-| File | Description | Size |
-|---|---|---|
-| [Chairman report](chairman_report) | Final synthesised forecast with probabilities, scenarios, and indicators | 23 KB |
-| [Stage 1 — 6 lens answers](stage1_answers) | Independent first-round responses from the six council lenses | 221 KB |
-| [Stage 2 — cross-reviews](stage2_reviews) | Lenses reviewing each other's reasoning | 94 KB |
-| [Experiment notes](experiment_notes) | Design, roster, cost, runtime, known issues | — |
-| [Rendered PDF](report_v2.pdf) | Typst-compiled chairman report | 62 KB |
+- [Lens answers (Stage 1)](lenses/) — six independent perspectives
+- [Cross-reviews (Stage 2)](reviews/) — lenses reviewing each other
 
-Raw Stage A simulation (`simulation.json`, 744 KB) and fresh-data bundle
-(`fresh_data.json`, 75 KB) are in the source repository under
-`reports/2026-04-09_224838Z/`.
+## Supporting material
+
+- [`fresh_data.json`](fresh_data.json) — Tavily + RSS/ISW seed
+- [`simulation.json`](simulation.json) — full Stage A transcript
+
 
 ---
 
-## Stage A — actor roster
+## Quick actor index
 
-38 actors briefed as personas with red lines, typical response patterns,
-and institutional constraints. Grouped here for quick navigation:
-
-**Iran — leadership & security state**
-Khamenei · IRGC (collective) · IRGC Aerospace Force · IRGC Intelligence
-Organization · Quds Force · MOIS · Artesh
-
-**Iran — domestic society**
-Organised dissidents · Quiet dissenting majority · Diaspora (general) ·
-Pro-Pahlavi inside Iran · Pro-Pahlavi diaspora
-
-**Israel — leadership & security state**
-Netanyahu · Cabinet collective · IDF General Staff · Mossad · Shin Bet ·
-Aman · Israeli IC collective
-
-**United States**
-Trump · CENTCOM · Executive branch collective · US Intelligence Community ·
-Political opposition
-
-**Lebanon & proxies**
-Government of Lebanon · LAF · Hezbollah SG · Houthi leadership
-
-**Regional mediators & powers**
-MBS · Erdoğan · Qatar mediation track · Pakistan mediator
-
-**Europe**
-EU collective · Ireland · Germany
-
-**Global powers**
-Russia · China · North Korea
-
-**Multilateral**
-UN Secretariat · UNTSO
-
----
-
-## Stage B — council lenses
-
-Six analytical lenses run in parallel, then cross-review. See
-[Stage 1 answers](stage1_answers) for the independent reasoning and
-[Stage 2 reviews](stage2_reviews) for the mutual critique.
-
----
-
-## Known issues with this run
-
-See [experiment notes](experiment_notes) for full details. Summary:
-
-- Original Typst render crashed on `<N` literals parsed as label openers.
-  A simpler `report_v2.typ` template was written post-hoc using pandoc's
-  Typst writer — that's the PDF linked above.
-- Pipeline exception handling only caught `TypstNotInstalled`; a render
-  failure bubbled up and killed the session banner. Fix queued.
-- Stage A runs silently for ~10 minutes; per-turn progress logging would
-  help long runs feel less opaque.
+- [aman](actors/aman)
+- [artesh](actors/artesh)
+- [centcom](actors/centcom)
+- [china](actors/china)
+- [erdogan](actors/erdogan)
+- [eu](actors/eu)
+- [germany_gov](actors/germany_gov)
+- [hezbollah](actors/hezbollah)
+- [houthis](actors/houthis)
+- [idf](actors/idf)
+- [iran_diaspora_general](actors/iran_diaspora_general)
+- [iran_dissidents](actors/iran_dissidents)
+- [iran_quiet_minority](actors/iran_quiet_minority)
+- [ireland_gov](actors/ireland_gov)
+- [irgc](actors/irgc)
+- [irgc_aerospace](actors/irgc_aerospace)
+- [irgc_intel](actors/irgc_intel)
+- [israeli_gov](actors/israeli_gov)
+- [israeli_ic](actors/israeli_ic)
+- [khamenei](actors/khamenei)
+- [laf](actors/laf)
+- [lebanon_gov](actors/lebanon_gov)
+- [mbs](actors/mbs)
+- [mois](actors/mois)
+- [mossad](actors/mossad)
+- [netanyahu](actors/netanyahu)
+- [north_korea](actors/north_korea)
+- [pakistan_mediator](actors/pakistan_mediator)
+- [qatar_mediator](actors/qatar_mediator)
+- [quds_force](actors/quds_force)
+- [russia](actors/russia)
+- [shah_supporters_diaspora](actors/shah_supporters_diaspora)
+- [shah_supporters_inside](actors/shah_supporters_inside)
+- [shin_bet](actors/shin_bet)
+- [trump](actors/trump)
+- [un](actors/un)
+- [untso](actors/untso)
+- [us_gov](actors/us_gov)
+- [us_ic](actors/us_ic)
+- [us_opposition](actors/us_opposition)

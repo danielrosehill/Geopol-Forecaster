@@ -1,0 +1,121 @@
+{
+  "overallAssessment": "The Iran-Israel-US conflict is at a precarious inflection point, with all lenses agreeing on short-term persistence of high-intensity Israeli operations against Hezbollah and IRGC targets alongside Iranian proxy retaliations, despite US diplomatic pauses creating implementation hurdles. Medium-term forecasts diverge sharply: optimistic lenses see de-escalatory nuclear concessions and stabilization, while pessimistic and probabilistic views anticipate failed deadlines triggering energy strikes and attrition warfare. Long-term, a consensus emerges on degraded Iranian missile/proxy capabilities and Israeli buffer zones in Lebanon, but uncertainties around nuclear breakout and regime stability risk broader regional war or frozen conflict.",
+  "consensusThemes": [
+    "Persistent short-term military operations by Israel in Lebanon/Syria despite US diplomacy (6/6 lenses)",
+    "Iranian proxies/missiles continue limited retaliations in 24h-1w (5/6 lenses)",
+    "Degradation of Iranian ballistic missile and proxy capabilities over 1m-1y (6/6 lenses)",
+    "US-Iran ceasefire faces severe diplomatic and implementation challenges (5/6 lenses)"
+  ],
+  "highConfidencePredictions": [
+    {
+      "prediction": "Israel conducts airstrikes or ground operations against Hezbollah/IRGC in southern Lebanon or Syria within 24h-1w",
+      "agreementCount": "6/6 lenses",
+      "confidence": "Very High"
+    },
+    {
+      "prediction": "Iranian-aligned proxies launch retaliatory rocket/drone attacks on Israel/US assets in 24h-1w",
+      "agreementCount": "5/6 lenses",
+      "confidence": "High"
+    },
+    {
+      "prediction": "Iranian ballistic missile launch capabilities degraded by 50%+ within 1m",
+      "agreementCount": "5/6 lenses",
+      "confidence": "High"
+    },
+    {
+      "prediction": "Israel establishes or maintains buffer zone up to Litani River in southern Lebanon within 1m-1y",
+      "agreementCount": "5/6 lenses",
+      "confidence": "High"
+    },
+    {
+      "prediction": "No immediate full de-escalation or ceasefire holds before March 27 deadline",
+      "agreementCount": "5/6 lenses",
+      "confidence": "High"
+    }
+  ],
+  "keyDivergences": [
+    {
+      "topic": "US-Iran March 27 deadline outcome",
+      "positions": [
+        {
+          "lens": "Optimistic",
+          "position": "Preliminary security understanding with nuclear concessions"
+        },
+        {
+          "lens": "Pessimistic",
+          "position": "Failed talks trigger US energy strikes"
+        },
+        {
+          "lens": "Neutral",
+          "position": "Pause discarded due to continued Iranian fire"
+        },
+        {
+          "lens": "Probabilistic",
+          "position": "Energy strikes on March 28"
+        },
+        {
+          "lens": "Historical",
+          "position": "Deadline extended or partial framework"
+        }
+      ]
+    },
+    {
+      "topic": "Escalation to nuclear site strikes",
+      "positions": [
+        {
+          "lens": "Pessimistic",
+          "position": "Israel strikes Natanz/Fordow"
+        },
+        {
+          "lens": "Blindsides",
+          "position": "IDF strikes Natanz (low prob)"
+        },
+        {
+          "lens": "Optimistic",
+          "position": "Verification protocols avoid strikes"
+        },
+        {
+          "lens": "Neutral",
+          "position": "No nuclear strikes; attrition instead"
+        },
+        {
+          "lens": "Historical",
+          "position": "No nuclear strikes occur"
+        }
+      ]
+    },
+    {
+      "topic": "Long-term Iranian nuclear trajectory",
+      "positions": [
+        {
+          "lens": "Pessimistic",
+          "position": "Weapons-grade breakout prompting preemption"
+        },
+        {
+          "lens": "Blindsides",
+          "position": "Underground test or halt concession"
+        },
+        {
+          "lens": "Neutral",
+          "position": "Clandestine dispersed underground program"
+        },
+        {
+          "lens": "Optimistic",
+          "position": "Revised framework delays by years"
+        }
+      ]
+    }
+  ],
+  "criticalUncertainties": [
+    "Iranian leadership cohesion and willingness for verifiable nuclear concessions",
+    "Proxy autonomy leading to uncontrolled escalations",
+    "US-Israel alignment amid divergent diplomatic-military priorities",
+    "Impact of internal regime stresses in Iran and Lebanon on proxy control"
+  ],
+  "actionableInsights": [
+    "Prioritize air/missile defenses and rapid response for proxy attacks in next 24h-1w",
+    "Prepare economic contingencies for potential Strait of Hormuz disruptions post-March 27",
+    "Strengthen multinational maritime task forces with Gulf partners for Red Sea/Bab el-Mandeb security",
+    "Monitor IAEA verifications and Iranian parliamentary signals for diplomatic breakthroughs"
+  ]
+}

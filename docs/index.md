@@ -5,14 +5,15 @@ title: Geopol Forecaster
 
 # Geopol Forecaster
 
-A two-stage geopolitical forecaster that runs a multi-actor simulation
-(snowglobe-pattern) followed by a multi-lens council review
-(llm-council pattern) to produce a synthesised chairman report on a
-forecast question.
+A two-stage geopolitical forecasting pipeline that publishes every
+perspective in every run — actor-by-actor, turn-by-turn, lens-by-lens,
+review-by-review — not just a summarised headline.
 
-- **Stage A — Actor simulation.** 38 persona-briefed actors take private
-  assessments and commit to concrete actions across four timesteps. A
-  referee model narrates the world state between turns.
+- **Stage A — Actor simulation.** A persona-briefed roster of state,
+  sub-state, and institutional actors independently commits to private
+  assessments and concrete actions across four timesteps. A referee
+  model narrates the resulting world state between turns. Actors see
+  only the referee-authored state and their own private memory.
 - **Stage B — Council lens panel.** Six analytical lenses answer the
   question independently, cross-review each other, and a chairman
   synthesises the final forecast.
@@ -22,11 +23,23 @@ forecast question.
 
 ## Experiment runs
 
-| Run ID | Date | Question | Artifacts |
+| Run | Date | Topic | Format |
 |---|---|---|---|
-| [2026-04-09_224838Z](runs/2026-04-09_224838Z/) | 2026-04-10 | Iran–Israel–US ceasefire durability (April 2026) | [chairman](runs/2026-04-09_224838Z/chairman_report) · [lenses](runs/2026-04-09_224838Z/stage1_answers) · [reviews](runs/2026-04-09_224838Z/stage2_reviews) · [notes](runs/2026-04-09_224838Z/experiment_notes) · [PDF](runs/2026-04-09_224838Z/report_v2.pdf) |
+| [2026-04-09_224838Z](runs/2026-04-09_224838Z/) | 2026-04-10 | Iran–Israel–US ceasefire durability (April 8 2026 deal) | 40 actors · 4 turns · 6-lens council · intel PDF |
+| [2026-03-24-22-51](runs/2026-03-24-22-51/) | 2026-03-25 | Iran–Israel–US escalation forecast (pre-ceasefire) | Legacy multi-lens scaffold · PDF only |
+
+## What each run page exposes
+
+For post-refactor runs, every page is navigable:
+
+- **Chairman report** — final synthesised forecast
+- **Intel PDF** — cover + BLUF + body + colophon, styled as an intelligence product
+- **All actors** — one page per actor with every turn's private assessment, public statement, concrete action, red lines considered, and confidence
+- **All turns** — world state at start of turn, all actions committed that turn, referee narration into the next turn
+- **All lens answers** — Stage 1 first-round answers from each council lens
+- **All cross-reviews** — Stage 2 cross-reviews between lenses
 
 ## Repository
 
-Source code, roster, and raw pipeline output live in the
+Source, roster, prompts, and publishing scripts live in the
 [Geopol-Forecaster GitHub repo](https://github.com/danielrosehill/Geopol-Forecaster).
