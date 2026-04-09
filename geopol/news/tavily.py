@@ -46,7 +46,21 @@ async def derive_queries(forecast_question: str) -> list[str]:
     Kept deliberately simple for v1; a smarter query-expansion agent can replace
     this later without touching the rest of the pipeline.
     """
-    q = forecast_question.strip().rstrip("?")
+    # Tavily has a ~400-char query limit — collapse whitespace, drop frontmatter
+    # and markdown, and truncate to a short headline.
+    raw = forecast_question.strip()
+    if raw.startswith("---"):
+        parts = raw.split("---", 2)
+        if len(parts) >= 3:
+            raw = parts[2]
+    # Take the first non-empty, non-heading line as the headline.
+    headline = ""
+    for line in raw.splitlines():
+        line = line.strip().lstrip("#").strip()
+        if line and not line.startswith("-"):
+            headline = line
+            break
+    q = (headline or raw).rstrip("?")[:180]
     return [
         f"{q} latest news",
         f"{q} analysis expert",

@@ -1,0 +1,15 @@
+title: Geopol Forecaster
+description: Two-stage geopolitical forecaster — snowglobe-style actor simulation + llm-council lens panel
+theme: jekyll-theme-minimal
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+permalink: pretty
+show_downloads: false
+exclude:
+  - raw-spec.md
+  - spec.md
+  - UPSTREAM-COMPONENTS.md
+  - screenshots/
