@@ -1,3 +1,5 @@
+![Geopol Forecaster](docs/assets/banner.png)
+
 # Geopol Forecaster
 
 Two-stage geopolitical forecasting experiment:

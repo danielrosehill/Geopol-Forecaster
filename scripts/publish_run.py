@@ -273,6 +273,7 @@ COPY_FILES = [
     "fresh_data.json",
     "simulation.json",
     "intel_report.pdf",
+    "full_transcript.pdf",
 ]
 
 

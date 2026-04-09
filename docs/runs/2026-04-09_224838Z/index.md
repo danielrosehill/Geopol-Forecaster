@@ -12,8 +12,9 @@ Stage A simulated **40 actors** across **4 timesteps**. Stage B ran a **6-lens c
 
 ## Final report
 
-- [Chairman report (full markdown)](chairman_report)
-- [Intel-style PDF](intel_report.pdf)
+- [Chairman report (markdown)](chairman_report)
+- [Intel-style PDF — executive briefing](intel_report.pdf) *(~15 pages: cover + BLUF + chairman + colophon)*
+- [Full transcript PDF — archival](full_transcript.pdf) *(328 pages: cover + BLUF + chairman + all turns + all actors + all lenses + all reviews + colophon)*
 - [Experiment notes](experiment_notes)
 
 ## Stage A — actor simulation

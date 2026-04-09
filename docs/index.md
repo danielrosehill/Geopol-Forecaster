@@ -3,6 +3,8 @@ layout: default
 title: Geopol Forecaster
 ---
 
+![Geopol Forecaster banner](assets/banner.png)
+
 # Geopol Forecaster
 
 A two-stage geopolitical forecasting pipeline that publishes every
