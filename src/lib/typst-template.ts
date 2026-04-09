@@ -73,8 +73,8 @@ function markdownToTypst(md: string): string {
       continue;
     }
 
-    // Bullet lists: - item or * item
-    const bulletMatch = line.match(/^(\s*)[-*]\s+(.*)$/);
+    // Bullet lists: - item or * item or • item
+    const bulletMatch = line.match(/^(\s*)[-*•]\s+(.*)$/);
     if (bulletMatch) {
       inList = true;
       const indent = bulletMatch[1].length > 0 ? "  " : "";
@@ -210,7 +210,8 @@ function typstPreamble(opts: {
   title: string;
   sessionId: string;
   timestamp: string;
-  generatedAt: string;
+  generatedAtIST: string;
+  generatedAtUTC: string;
 }): string {
   return `
 #set document(title: "${opts.title}", author: "Geopol Forecaster")
@@ -233,7 +234,7 @@ function typstPreamble(opts: {
     set text(font: "IBM Plex Sans", size: 8pt, fill: rgb("#999"))
     grid(
       columns: (1fr, 1fr),
-      align(left)[Generated: ${opts.generatedAt}],
+      align(left)[${opts.generatedAtIST} / ${opts.generatedAtUTC}],
       align(right)[Page #current of #total],
     )
   },
@@ -243,14 +244,35 @@ function typstPreamble(opts: {
   let n = nums.pos()
   if n.len() <= 2 { numbering("1.1", ..nums) }
 })
-#set par(justify: true, leading: 0.65em)
+#set par(justify: true, leading: 0.75em)
 #show raw: set text(font: "IBM Plex Mono", size: 9pt)
+
+// Add spacing after headings for breathing room
+#show heading.where(level: 1): it => {
+  v(0.6cm)
+  it
+  v(0.3cm)
+}
+#show heading.where(level: 2): it => {
+  v(0.4cm)
+  it
+  v(0.2cm)
+}
+#show heading.where(level: 3): it => {
+  v(0.3cm)
+  it
+  v(0.15cm)
+}
 
 // Accent color
 #let accent = rgb("#1a365d")
 #let accent-light = rgb("#2b6cb0")
 #let muted = rgb("#718096")
 #let border = rgb("#e2e8f0")
+#let callout-bg = rgb("#edf2f7")
+#let callout-border = rgb("#a0aec0")
+#let highlight-bg = rgb("#fffff0")
+#let highlight-border = rgb("#d69e2e")
 `;
 }
 
@@ -266,10 +288,15 @@ export function buildLensTypstSource(params: {
   createdAt: string;
 }): string {
   const timestamp = new Date(params.createdAt).toUTCString();
-  const generatedAt = new Date().toUTCString();
+  const generatedAtUTC = new Date().toUTCString();
+  const generatedAtIST = new Date().toLocaleString("en-GB", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }) + " IST";
 
   return `
-${typstPreamble({ title: `${params.lensName} Forecast — Geopol Forecaster`, sessionId: params.sessionId, timestamp, generatedAt })}
+${typstPreamble({ title: `${params.lensName} Forecast — Geopol Forecaster`, sessionId: params.sessionId, timestamp, generatedAtIST, generatedAtUTC })}
 
 // Title page
 #v(3cm)
@@ -302,7 +329,7 @@ ${typstPreamble({ title: `${params.lensName} Forecast — Geopol Forecaster`, se
       text(fill: muted)[Agent],
       [${escapeTypstChars(params.agentModel)}],
       text(fill: muted)[PDF generated],
-      [${generatedAt}],
+      [${generatedAtIST} / ${generatedAtUTC}],
     )
   ]
 ]
@@ -351,7 +378,11 @@ function isStructuredSummary(val: unknown): val is StructuredSummary {
 /** Render a structured forecast for one lens + one timeframe to Typst */
 function renderStructuredTimeframe(tf: { overview: string; predictions: Array<{ prediction: string; probability: string; confidence: string; reasoning: string }>; keyRisks: string[]; indicators: string[] }): string {
   const lines: string[] = [];
-  lines.push(escapeTypstChars(tf.overview));
+
+  // Overview in a subtle callout box
+  lines.push(`#block(inset: 10pt, radius: 3pt, fill: callout-bg, stroke: 0.5pt + callout-border, width: 100%)[`);
+  lines.push(`  ${escapeTypstChars(tf.overview)}`);
+  lines.push(`]`);
   lines.push("");
 
   // Predictions table
@@ -360,6 +391,7 @@ function renderStructuredTimeframe(tf: { overview: string; predictions: Array<{ 
     lines.push(`  columns: (2fr, auto, auto),`);
     lines.push(`  stroke: 0.5pt + border,`);
     lines.push(`  inset: 6pt,`);
+    lines.push(`  fill: (_, row) => if row == 0 { rgb("#f7fafc") },`);
     lines.push(`  [*Prediction*], [*Probability*], [*Confidence*],`);
     for (const p of tf.predictions) {
       lines.push(`  [${escapeTypstChars(p.prediction)}], [${escapeTypstChars(p.probability)}], [${escapeTypstChars(p.confidence)}],`);
@@ -367,24 +399,44 @@ function renderStructuredTimeframe(tf: { overview: string; predictions: Array<{ 
     lines.push(`)`);
     lines.push("");
 
-    // Reasoning for each prediction
+    // Reasoning as compact list
+    lines.push(`#text(size: 9.5pt)[`);
     for (const p of tf.predictions) {
       lines.push(`- *${escapeTypstChars(p.prediction)}*: ${escapeTypstChars(p.reasoning)}`);
     }
+    lines.push(`]`);
     lines.push("");
   }
 
-  // Key risks
-  if (tf.keyRisks.length > 0) {
-    lines.push(`*Key Risks:*`);
-    for (const r of tf.keyRisks) lines.push(`- ${escapeTypstChars(r)}`);
-    lines.push("");
-  }
+  // Key risks and indicators side by side where possible
+  if (tf.keyRisks.length > 0 || tf.indicators.length > 0) {
+    lines.push(`#grid(`);
+    lines.push(`  columns: (1fr, 1fr),`);
+    lines.push(`  column-gutter: 12pt,`);
 
-  // Indicators to watch
-  if (tf.indicators.length > 0) {
-    lines.push(`*Indicators to Watch:*`);
-    for (const ind of tf.indicators) lines.push(`- ${escapeTypstChars(ind)}`);
+    // Risks column
+    if (tf.keyRisks.length > 0) {
+      const risks = tf.keyRisks.map(r => `- ${escapeTypstChars(r)}`).join("\n");
+      lines.push(`  [`);
+      lines.push(`    #text(size: 9.5pt, weight: "bold")[Key Risks]`);
+      lines.push(`    ${risks}`);
+      lines.push(`  ],`);
+    } else {
+      lines.push(`  [],`);
+    }
+
+    // Indicators column
+    if (tf.indicators.length > 0) {
+      const inds = tf.indicators.map(ind => `- ${escapeTypstChars(ind)}`).join("\n");
+      lines.push(`  [`);
+      lines.push(`    #text(size: 9.5pt, weight: "bold")[Indicators to Watch]`);
+      lines.push(`    ${inds}`);
+      lines.push(`  ],`);
+    } else {
+      lines.push(`  [],`);
+    }
+
+    lines.push(`)`);
     lines.push("");
   }
 
@@ -395,24 +447,29 @@ function renderStructuredTimeframe(tf: { overview: string; predictions: Array<{ 
 function renderStructuredSummary(s: StructuredSummary): string {
   const lines: string[] = [];
 
-  // Overall assessment
-  lines.push(escapeTypstChars(s.overallAssessment));
+  // Overall assessment in a prominent callout box
+  lines.push(`#block(inset: 14pt, radius: 4pt, fill: callout-bg, stroke: (left: 3pt + accent), width: 100%)[`);
+  lines.push(`  #text(size: 10.5pt)[${escapeTypstChars(s.overallAssessment)}]`);
+  lines.push(`]`);
   lines.push("");
 
   // Consensus themes
   lines.push(`== Consensus Themes`);
+  lines.push("");
   for (const theme of s.consensusThemes) {
     lines.push(`+ ${escapeTypstChars(theme)}`);
   }
   lines.push("");
 
-  // High confidence predictions
+  // High confidence predictions — highlighted table
   lines.push(`== High-Confidence Predictions`);
+  lines.push("");
   if (s.highConfidencePredictions.length > 0) {
     lines.push(`#table(`);
     lines.push(`  columns: (2fr, auto, auto),`);
     lines.push(`  stroke: 0.5pt + border,`);
-    lines.push(`  inset: 6pt,`);
+    lines.push(`  inset: 8pt,`);
+    lines.push(`  fill: (_, row) => if row == 0 { rgb("#f7fafc") },`);
     lines.push(`  [*Prediction*], [*Agreement*], [*Confidence*],`);
     for (const p of s.highConfidencePredictions) {
       lines.push(`  [${escapeTypstChars(p.prediction)}], [${escapeTypstChars(p.agreementCount)}], [${escapeTypstChars(p.confidence)}],`);
@@ -421,25 +478,33 @@ function renderStructuredSummary(s: StructuredSummary): string {
   }
   lines.push("");
 
-  // Key divergences
+  // Key divergences — each topic gets a small box
   lines.push(`== Key Divergences`);
+  lines.push("");
   for (const d of s.keyDivergences) {
-    lines.push(`*${escapeTypstChars(d.topic)}:*`);
+    lines.push(`#block(inset: 10pt, radius: 3pt, stroke: 0.5pt + border, width: 100%)[`);
+    lines.push(`  *${escapeTypstChars(d.topic)}*`);
+    lines.push(``);
     for (const pos of d.positions) {
-      lines.push(`- _${escapeTypstChars(pos.lens)}_: ${escapeTypstChars(pos.position)}`);
+      lines.push(`  - _${escapeTypstChars(pos.lens)}_: ${escapeTypstChars(pos.position)}`);
     }
+    lines.push(`]`);
     lines.push("");
   }
 
-  // Critical uncertainties
+  // Critical uncertainties — highlighted warning box
   lines.push(`== Critical Uncertainties`);
+  lines.push("");
+  lines.push(`#block(inset: 10pt, radius: 3pt, fill: highlight-bg, stroke: (left: 3pt + highlight-border), width: 100%)[`);
   for (const u of s.criticalUncertainties) {
-    lines.push(`- ${escapeTypstChars(u)}`);
+    lines.push(`  - ${escapeTypstChars(u)}`);
   }
+  lines.push(`]`);
   lines.push("");
 
   // Actionable insights
   lines.push(`== Actionable Insights`);
+  lines.push("");
   for (const a of s.actionableInsights) {
     lines.push(`+ ${escapeTypstChars(a)}`);
   }
@@ -455,9 +520,23 @@ export function buildTypstSource(params: {
   sitrep: Record<string, string> | null;
   forecasts: Record<string, unknown>;
   summary: unknown;
+  generatedAtIST?: string;
+  generatedAtUTC?: string;
 }): string {
-  const timestamp = new Date(params.createdAt).toUTCString();
-  const generatedAt = new Date().toUTCString();
+  const createdDate = new Date(params.createdAt);
+  const timestamp = createdDate.toUTCString();
+  const timestampIST = createdDate.toLocaleString("en-GB", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }) + " IST";
+
+  const generatedAtUTC = params.generatedAtUTC ?? new Date().toUTCString();
+  const generatedAtIST = params.generatedAtIST ?? new Date().toLocaleString("en-GB", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }) + " IST";
 
   // Detect if forecasts are structured (new) or legacy (old)
   const firstForecast = Object.values(params.forecasts)[0];
@@ -480,13 +559,36 @@ export function buildTypstSource(params: {
     (f) => f.timeframes && Object.keys(f.timeframes).length > 0 && !f.timeframes["_full"]
   );
 
-  // Build SITREP sections
+  // Build SITREP sections — key_takeaways gets special callout treatment
   let sitrepContent = "";
   if (params.sitrep && Object.keys(params.sitrep).length > 0) {
     const sections = Object.entries(SITREP_SECTION_TITLES)
       .map(([key, title]) => {
         const content = params.sitrep![key];
         if (!content) return "";
+
+        // Key takeaways get a highlighted callout box
+        if (key === "key_takeaways") {
+          return `
+== ${title}
+
+#block(inset: 12pt, radius: 4pt, fill: callout-bg, stroke: (left: 3pt + accent), width: 100%)[
+${markdownToTypst(content)}
+]
+`;
+        }
+
+        // Outlook gets a warning-style highlight
+        if (key === "outlook") {
+          return `
+== ${title}
+
+#block(inset: 12pt, radius: 4pt, fill: highlight-bg, stroke: (left: 3pt + highlight-border), width: 100%)[
+${markdownToTypst(content)}
+]
+`;
+        }
+
         return `
 == ${title}
 
@@ -574,7 +676,9 @@ ${renderStructuredTimeframe(tfData)}
 
 #text(size: 9pt, fill: muted)[_Agent: ${model} (via OpenRouter)_]
 
-${escapeTypstChars(rawForecast.lensAssessment)}
+#block(inset: 10pt, radius: 3pt, fill: callout-bg, stroke: 0.5pt + callout-border, width: 100%)[
+  ${escapeTypstChars(rawForecast.lensAssessment)}
+]
 
 ${sections}
 `;
@@ -600,7 +704,7 @@ ${markdownToTypst(content)}
   }).join("\n");
 
   return `
-${typstPreamble({ title: "Geopolitical Forecast Report", sessionId: params.sessionId, timestamp, generatedAt })}
+${typstPreamble({ title: "Geopolitical Forecast Report", sessionId: params.sessionId, timestamp, generatedAtIST, generatedAtUTC })}
 
 // ─── Cover Page ───
 
@@ -614,8 +718,10 @@ ${typstPreamble({ title: "Geopolitical Forecast Report", sessionId: params.sessi
   #text(size: 26pt, weight: "bold", fill: accent)[Geopolitical Forecast Report]
   #v(0.3cm)
   #text(size: 13pt, fill: muted)[Iran\\–Israel\\–US Conflict Assessment]
-  #v(0.3cm)
-  #text(size: 10.5pt, fill: muted)[${timestamp}]
+  #v(0.5cm)
+  #text(size: 10.5pt, fill: muted)[${timestampIST}]
+  #v(0.1cm)
+  #text(size: 9pt, fill: muted)[${timestamp}]
 ]
 
 #v(1.5cm)
@@ -665,7 +771,7 @@ ${typstPreamble({ title: "Geopolitical Forecast Report", sessionId: params.sessi
 
 #v(0.8cm)
 
-#outline(title: none, indent: 1.5em, depth: 2)
+#outline(title: none, indent: 1.5em, depth: 1)
 
 #pagebreak()
 
@@ -732,8 +838,12 @@ ${forecastByLens}
   columns: (1fr, 2fr),
   stroke: 0.5pt + border,
   inset: 8pt,
+  fill: (_, row) => if row == 0 { rgb("#f7fafc") },
   [*Session ID*], [#text(font: "IBM Plex Mono")[${escapeTypstChars(params.sessionId.slice(0, 8))}]],
-  [*Timestamp*], [${timestamp}],
+  [*Created (IST)*], [${timestampIST}],
+  [*Created (UTC)*], [${timestamp}],
+  [*Generated (IST)*], [${generatedAtIST}],
+  [*Generated (UTC)*], [${generatedAtUTC}],
   [*Ground Truth Sources*], [Gemini 3.1 Flash Lite (search-grounded) + Grok 4.1 Fast],
   [*SITREP Agent*], [Gemini 3.1 Flash Lite (via OpenRouter)],
   [*Forecast Agents*], [6 parallel lenses (see below)],

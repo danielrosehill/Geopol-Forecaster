@@ -56,6 +56,25 @@ if (!process.env.OPENROUTER_API_KEY || !process.env.GEMINI_API_KEY) {
   process.exit(1);
 }
 
+/** Format a Date as IST (Asia/Jerusalem) string */
+function formatIST(date: Date): string {
+  return date.toLocaleString("en-GB", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }) + " IST";
+}
+
+/** Format a Date as UTC string */
+function formatUTC(date: Date): string {
+  return date.toUTCString();
+}
+
 const sessionId = randomUUID();
 const createdAt = new Date().toISOString();
 const ts = createdAt.slice(0, 16).replace(/[T:]/g, "-");
@@ -64,6 +83,7 @@ mkdirSync(outDir, { recursive: true });
 
 async function main() {
 const startTime = Date.now();
+const startDate = new Date();
 
 function log(msg: string) {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -136,7 +156,12 @@ CRITICAL RULES:
 - Follow with report date/time in UTC
 - Executive overview paragraph (3-5 sentences)
 - Time-window sections: Past 3 Hours, Past 6 Hours, Past 12 Hours, Past 24 Hours
-- Within each section: Military Actions, Diplomatic Developments, Public Statements, Regional Reactions
+- Within each section use these sub-headings: Military Actions, Diplomatic Developments, Public Statements, Regional Reactions
+
+FORMATTING RULES (important for readability):
+- Use bullet points for individual facts/events — one bullet per discrete event or development
+- Each bullet should start with a timestamp in parentheses where available, e.g. "(21:30 UTC)"
+- Keep paragraphs to 2-3 sentences maximum
 - If feeds conflict, prefer the source with a specific timestamp or attribution
 - All timestamps in UTC
 - Neutral, factual tone — no predictions`,
@@ -168,8 +193,10 @@ Transform the ground truth into a structured SITREP. Output valid JSON with thes
   "osint_indicators": "...", "outlook": "..."
 }
 
-Rules:
-- Every section must have content
+FORMATTING RULES (mandatory):
+- key_takeaways: 3-5 bullet points (use "• " prefix), each 1-2 sentences. These are the headline items.
+- Each other section: Start with a 1-sentence summary in bold (use **bold** markdown), then use bullet points ("• ") for individual facts and developments.
+- Keep each bullet to 1-2 sentences. Do NOT write dense paragraphs.
 - Use precise military and geopolitical terminology
 - All timestamps in UTC`,
   prompt: `Transform the following into a structured SITREP. Return ONLY valid JSON, no markdown fences.\n\n${BASE_CONTEXT}\n\n=== CURRENT SITUATION UPDATE ===\n\n${groundTruth}`,
@@ -204,12 +231,13 @@ ${lens.directive}
 You will receive a confirmed ground truth document about the Iran-Israel-US conflict. Produce forecasts for four timeframes: Next 24 Hours, Next 1 Week, Next 1 Month, Next 1 Year.
 
 For each timeframe, provide:
-- An overview of the most likely trajectory
+- An overview of the most likely trajectory (2-3 sentences max)
 - 2-6 specific, concrete predictions with probability estimates and confidence levels
 - Key risks or uncertainties
 - Observable indicators to watch
 
-Be concrete — name actors, actions, and outcomes. Assign explicit probabilities where possible.`,
+Be concrete — name actors, actions, and outcomes. Assign explicit probabilities where possible.
+Keep reasoning concise — 1-2 sentences per prediction, not full paragraphs.`,
       prompt: `=== CONFLICT BACKGROUND ===\n\n${BASE_CONTEXT}\n\n=== CONFIRMED GROUND TRUTH ===\n\n${groundTruth}`,
     });
 
@@ -246,7 +274,7 @@ const summaryResult = await generateText({
   system: `You are a senior geopolitical analyst. You will receive six structured forecast analyses of the Iran-Israel-US conflict, each from a different analytical lens (Neutral, Pessimistic, Optimistic, Blindsides, Probabilistic, Historical).
 
 Produce a structured executive summary that:
-- Provides an overall assessment synthesizing all perspectives
+- Provides an overall assessment synthesizing all perspectives (3-5 sentences, each making a distinct point — do NOT write a single run-on sentence)
 - Identifies consensus themes (where most lenses agree)
 - Lists high-confidence predictions with lens agreement counts
 - Highlights key divergences between lenses
@@ -264,6 +292,10 @@ log(`Summary saved (structured, ${Object.keys(summary!).length} sections)`);
 // ─── Stage 5: PDF Generation ───
 log("Stage 5/6: Generating PDF report...");
 
+const endDate = new Date();
+const generatedAtIST = formatIST(endDate);
+const generatedAtUTC = formatUTC(endDate);
+
 const typstSource = buildTypstSource({
   sessionId,
   createdAt,
@@ -271,6 +303,8 @@ const typstSource = buildTypstSource({
   sitrep,
   forecasts,
   summary,
+  generatedAtIST,
+  generatedAtUTC,
 });
 
 const typPath = join(outDir, "report.typ");
@@ -291,8 +325,10 @@ try {
 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 console.log(`\n${"=".repeat(60)}`);
 console.log(`Pipeline complete in ${elapsed}s`);
-console.log(`Session: ${sessionId.slice(0, 8)}`);
-console.log(`Output:  ${outDir}/`);
+console.log(`Session:   ${sessionId.slice(0, 8)}`);
+console.log(`Started:   ${formatIST(startDate)} / ${formatUTC(startDate)}`);
+console.log(`Completed: ${generatedAtIST} / ${generatedAtUTC}`);
+console.log(`Output:    ${outDir}/`);
 console.log(`Files:`);
 console.log(`  00-news-headlines.md RSS headlines (Times of Israel, JPost)`);
 console.log(`  00-isw-analysis.md   ISW/CTP expert analysis (full text)`);
