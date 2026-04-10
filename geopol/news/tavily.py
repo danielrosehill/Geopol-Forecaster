@@ -34,7 +34,7 @@ async def tavily_search(query: str, max_results: int = 5) -> TavilyResult:
         r.raise_for_status()
         data = r.json()
     citations = [
-        {"url": x.get("url", ""), "title": x.get("title", ""), "snippet": x.get("content", "")[:400]}
+        {"url": x.get("url", ""), "title": x.get("title", ""), "snippet": x.get("content", "")[:800]}
         for x in data.get("results", [])
     ]
     return TavilyResult(query=query, answer=data.get("answer", ""), citations=citations)
@@ -64,6 +64,8 @@ async def derive_queries(forecast_question: str) -> list[str]:
     return [
         f"{q} latest news",
         f"{q} analysis expert",
-        "Iran Israel ceasefire status this week",
+        "Iran Israel ceasefire diplomacy status this week",
         "IDF IRGC Hezbollah escalation latest",
+        "Russia China Iran nuclear facility latest",
+        "Strait of Hormuz shipping oil transit latest",
     ]

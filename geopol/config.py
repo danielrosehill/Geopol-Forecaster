@@ -32,8 +32,8 @@ MODEL_RESEARCHER = MODEL_DEFAULT
 
 # ─── Simulation parameters ───
 MC_RUNS = 1
-SIM_TIMESTEPS = 4
-TIMESTEP_LABELS = ["now", "+24h", "+1 week", "+1 month"]
+SIM_TIMESTEPS = 3
+TIMESTEP_LABELS = ["+24h", "+72h", "+2 weeks"]
 
 # ─── Paths ───
 REPO_ROOT = Path(__file__).resolve().parent.parent

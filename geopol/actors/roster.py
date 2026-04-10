@@ -899,3 +899,11 @@ ROSTER: list[ActorSpec] = [
         constraints=["Coalition politics", "EU consensus building", "Rising domestic criticism", "Legal constraints on arms exports"],
     ),
 ]
+
+# Curated 10-actor subset for Iran-Israel focused simulations.
+# Covers the key decision-makers on each side plus critical external actors.
+_CORE_IDS = {
+    "khamenei", "netanyahu", "trump", "irgc", "hezbollah",
+    "centcom", "mossad", "idf", "russia", "mbs",
+}
+ROSTER_CORE: list[ActorSpec] = [a for a in ROSTER if a.id in _CORE_IDS]

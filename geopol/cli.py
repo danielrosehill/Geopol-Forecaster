@@ -27,14 +27,14 @@ def smoketest() -> None:
     """Tiny smoke test — 3 actors, 2 timesteps, 1 run, no council."""
     import asyncio
 
-    from .actors import ROSTER
+    from .actors import ROSTER_CORE
     from .simulation import run_simulation
 
     async def _go() -> None:
         sim = await run_simulation(
             "Will the Iran-Israel ceasefire hold through Q3 2026?",
             news_seed="(smoke test: no fresh data)",
-            actors=ROSTER[:3],
+            actors=ROSTER_CORE[:3],
             n_runs=1,
             timesteps=2,
         )

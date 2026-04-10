@@ -19,7 +19,7 @@ import asyncio
 import json
 from datetime import datetime, timezone
 
-from ..actors import ActorSpec, ROSTER
+from ..actors import ActorSpec, ROSTER_CORE
 from ..base_context import BASE_CONTEXT
 from ..config import (
     MODEL_SIM_ACTOR,
@@ -109,7 +109,7 @@ resulting world state after each turn. Strict rules:
   authorises Israeli action).
 - You may note second-order effects only if they are clearly implied by the
   stated actions plus the existing base context.
-- Write ≤300 words of prose narration, then a compact structured block:
+- Write ≤500 words of prose narration, then a compact structured block:
   ACTIVE_ACTORS: [...]
   RECENT_EVENTS: [...]
   OPEN_TENSIONS: [...]
@@ -200,7 +200,7 @@ async def _summarise(runs: list[SimulationRun]) -> SimulationSummary:
             trace_blob.append("")
             trace_blob.append(f"_Referee:_ {turn.referee_narration[:800]}")
             trace_blob.append("")
-    blob = "\n".join(trace_blob)[:18000]
+    blob = "\n".join(trace_blob)[:30000]
     system = (
         "You are a simulation analyst. Read the multi-run trace and produce a "
         "strict-JSON summary with these keys: dominant_trajectory (str), "
@@ -242,7 +242,7 @@ async def run_simulation(
 ) -> SimulationResult:
     from ..config import MC_RUNS
 
-    actors = actors or ROSTER
+    actors = actors or ROSTER_CORE
     n_runs = n_runs if n_runs is not None else MC_RUNS
     timesteps = timesteps if timesteps is not None else SIM_TIMESTEPS
 

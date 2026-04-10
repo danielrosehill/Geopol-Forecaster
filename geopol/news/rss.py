@@ -48,6 +48,11 @@ class NewsBrief:
     isw_brief: str = ""
 
 
+def _strip_html(html: str) -> str:
+    import re
+    return re.sub(r"<[^>]+>", "", html).replace("&nbsp;", " ").replace("&amp;", "&").strip()
+
+
 def _has_keyword(text: str) -> bool:
     t = text.lower()
     return any(k in t for k in KEYWORDS)
@@ -72,7 +77,8 @@ async def _fetch_rss(client: httpx.AsyncClient, name: str, url: str, max_age_hou
         title = getattr(item, "title", "")
         link = getattr(item, "link", "")
         pub = getattr(item, "published", "") or getattr(item, "updated", "")
-        desc = getattr(item, "summary", "") or getattr(item, "description", "")
+        desc = _strip_html(getattr(item, "summary", "") or getattr(item, "description", ""))
+        title = _strip_html(title)
         if not title or not link:
             continue
         blob = f"{title} {desc}"

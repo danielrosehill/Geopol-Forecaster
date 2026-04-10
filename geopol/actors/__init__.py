@@ -1,3 +1,3 @@
-from .roster import ROSTER, ActorSpec
+from .roster import ROSTER, ROSTER_CORE, ActorSpec
 
-__all__ = ["ROSTER", "ActorSpec"]
+__all__ = ["ROSTER", "ROSTER_CORE", "ActorSpec"]

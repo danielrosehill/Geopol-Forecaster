@@ -58,8 +58,8 @@ You have three sources of information about the situation:
     assumptions in `flags_for_council` — verify them against the fresh data.
 
 Your task:
-- Produce a forecast under your lens's directive, across 24h / 1 week / 1 month
-  / 1 year horizons.
+- Produce a forecast under your lens's directive, across 24h / 72h / 2 week
+  horizons.
 - For each prediction, note whether it is supported by fresh data, by the
   simulation, or both.
 - Include a `simulation_divergence_notes` section describing where your
@@ -155,7 +155,7 @@ Write the report in Markdown with these sections, in this order:
 
 1. **Headline forecast** — one paragraph with an explicit confidence statement
    and a probability-band for the core outcome.
-2. **Key predictions** — a table. Columns: prediction | horizon (24h / 1w / 1m / 1y)
+2. **Key predictions** — a table. Columns: prediction | horizon (24h / 72h / 2w)
    | probability | confidence | supported_by (fresh_data / simulation / both / neither).
 3. **Where research and simulation agree** — high-confidence claims.
 4. **Where they diverge** — flagged as critical uncertainties, with explanation.
@@ -182,7 +182,7 @@ Write the final report now."""
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
         model=MODEL_COUNCIL_CHAIRMAN,
         temperature=0.5,
-        max_tokens=6000,
+        max_tokens=12000,
     )
 
 
