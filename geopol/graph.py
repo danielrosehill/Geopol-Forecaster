@@ -339,14 +339,6 @@ def build_graph() -> StateGraph:
     return builder
 
 
-async def get_compiled_graph():
-    """Return a compiled graph with SQLite checkpointing."""
-    CHECKPOINT_DB.parent.mkdir(parents=True, exist_ok=True)
-    checkpointer = AsyncSqliteSaver.from_conn_string(str(CHECKPOINT_DB))
-    builder = build_graph()
-    return builder.compile(checkpointer=checkpointer)
-
-
 async def run_forecast(
     question: str,
     *,
@@ -377,15 +369,19 @@ async def run_forecast(
         "report_dir": str(out_dir),
     }
 
-    graph = await get_compiled_graph()
-    config = {"configurable": {"thread_id": sid}}
-    final_state = await graph.ainvoke(initial_state, config)
+    CHECKPOINT_DB.parent.mkdir(parents=True, exist_ok=True)
+    async with AsyncSqliteSaver.from_conn_string(str(CHECKPOINT_DB)) as checkpointer:
+        graph = build_graph().compile(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": sid}}
+        final_state = await graph.ainvoke(initial_state, config)
     return final_state
 
 
 async def resume_forecast(session_id: str) -> ForecastState:
     """Resume a previously interrupted forecast run."""
-    graph = await get_compiled_graph()
-    config = {"configurable": {"thread_id": session_id}}
-    final_state = await graph.ainvoke(None, config)
+    CHECKPOINT_DB.parent.mkdir(parents=True, exist_ok=True)
+    async with AsyncSqliteSaver.from_conn_string(str(CHECKPOINT_DB)) as checkpointer:
+        graph = build_graph().compile(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": session_id}}
+        final_state = await graph.ainvoke(None, config)
     return final_state
