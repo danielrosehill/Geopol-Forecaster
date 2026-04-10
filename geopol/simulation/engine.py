@@ -151,14 +151,17 @@ async def _run_single(
     question: str,
     news_seed: str,
     timesteps: int,
+    *,
+    timestep_labels: list[str] | None = None,
 ) -> SimulationRun:
+    labels = timestep_labels or TIMESTEP_LABELS
     world_state = _initial_world_state(question, news_seed)
     private_memory: dict[str, str] = {a.id: "" for a in actors}
     turns: list[SimulationTurn] = []
     for t in range(timesteps):
-        label = TIMESTEP_LABELS[t] if t < len(TIMESTEP_LABELS) else f"t+{t}"
+        label = labels[t] if t < len(labels) else f"t+{t}"
         next_label = (
-            TIMESTEP_LABELS[t + 1] if t + 1 < len(TIMESTEP_LABELS) else "(sim end)"
+            labels[t + 1] if t + 1 < len(labels) else "(sim end)"
         )
         actions = await asyncio.gather(
             *[
@@ -239,15 +242,27 @@ async def run_simulation(
     actors: list[ActorSpec] | None = None,
     n_runs: int | None = None,
     timesteps: int | None = None,
+    horizons: list[str] | None = None,
 ) -> SimulationResult:
     from ..config import MC_RUNS
 
     actors = actors or ROSTER_CORE
     n_runs = n_runs if n_runs is not None else MC_RUNS
-    timesteps = timesteps if timesteps is not None else SIM_TIMESTEPS
+
+    if horizons:
+        effective_labels = horizons
+        effective_timesteps = len(horizons)
+    else:
+        effective_labels = TIMESTEP_LABELS
+        effective_timesteps = timesteps if timesteps is not None else SIM_TIMESTEPS
 
     runs = []
     for i in range(n_runs):
-        runs.append(await _run_single(i, actors, question, news_seed, timesteps))
+        runs.append(
+            await _run_single(
+                i, actors, question, news_seed, effective_timesteps,
+                timestep_labels=effective_labels,
+            )
+        )
     summary = await _summarise(runs)
     return SimulationResult(runs=runs, summary=summary)

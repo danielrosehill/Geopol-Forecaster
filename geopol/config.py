@@ -35,6 +35,14 @@ MC_RUNS = 1
 SIM_TIMESTEPS = 3
 TIMESTEP_LABELS = ["+24h", "+72h", "+2 weeks"]
 
+# Common presets for quick CLI access
+HORIZON_PRESETS: dict[str, list[str]] = {
+    "default": ["+24h", "+72h", "+2 weeks"],
+    "short": ["+24h", "+72h", "+1 week"],
+    "medium": ["+1 week", "+1 month", "+1 year"],
+    "long": ["+1 month", "+6 months", "+5 years"],
+}
+
 # ─── Paths ───
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPORTS_DIR = REPO_ROOT / "reports"

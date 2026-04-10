@@ -42,7 +42,8 @@ class CouncilResult:
     final_report_markdown: str
 
 
-def _member_system_prompt(lens: LensSpec) -> str:
+def _member_system_prompt(lens: LensSpec, horizon_labels: list[str] | None = None) -> str:
+    horizons_str = " / ".join(horizon_labels) if horizon_labels else "24h / 72h / 2 week"
     return f"""You are a forecasting analyst operating under the **{lens.name}** lens.
 
 Directive: {lens.directive}
@@ -58,7 +59,7 @@ You have three sources of information about the situation:
     assumptions in `flags_for_council` — verify them against the fresh data.
 
 Your task:
-- Produce a forecast under your lens's directive, across 24h / 72h / 2 week
+- Produce a forecast under your lens's directive, across {horizons_str}
   horizons.
 - For each prediction, note whether it is supported by fresh data, by the
   simulation, or both.
@@ -89,10 +90,12 @@ def _bundle(question: str, fresh: FreshData, sim: SimulationResult) -> str:
 """
 
 
-async def _stage1_member(lens: LensSpec, bundle: str) -> CouncilMemberAnswer:
+async def _stage1_member(
+    lens: LensSpec, bundle: str, horizon_labels: list[str] | None = None
+) -> CouncilMemberAnswer:
     content = await chat(
         [
-            {"role": "system", "content": _member_system_prompt(lens)},
+            {"role": "system", "content": _member_system_prompt(lens, horizon_labels)},
             {"role": "user", "content": bundle},
         ],
         model=MODEL_COUNCIL_MEMBER,
@@ -139,14 +142,16 @@ async def _stage3_chairman(
     bundle: str,
     stage1: list[CouncilMemberAnswer],
     stage2: list[CouncilPeerReview],
+    horizon_labels: list[str] | None = None,
 ) -> str:
+    horizons_str = " / ".join(horizon_labels) if horizon_labels else "24h / 72h / 2w"
     answers_blob = "\n\n".join(
         f"## {m.lens.name} Lens\n{m.answer}" for m in stage1
     )
     reviews_blob = "\n\n".join(
         f"## Review by {r.reviewer_lens_id}\n{r.critique}" for r in stage2
     )
-    system = """You are the Chairman of a 6-lens forecasting council. Six analysts
+    system = f"""You are the Chairman of a 6-lens forecasting council. Six analysts
 answered the same question under different directives, then reviewed each
 other anonymously. Your job is to write the FINAL REPORT directly — there is
 no downstream synthesis stage.
@@ -155,7 +160,7 @@ Write the report in Markdown with these sections, in this order:
 
 1. **Headline forecast** — one paragraph with an explicit confidence statement
    and a probability-band for the core outcome.
-2. **Key predictions** — a table. Columns: prediction | horizon (24h / 72h / 2w)
+2. **Key predictions** — a table. Columns: prediction | horizon ({horizons_str})
    | probability | confidence | supported_by (fresh_data / simulation / both / neither).
 3. **Where research and simulation agree** — high-confidence claims.
 4. **Where they diverge** — flagged as critical uncertainties, with explanation.
@@ -190,11 +195,14 @@ async def run_council(
     question: str,
     fresh: FreshData,
     sim: SimulationResult,
+    horizons: list[str] | None = None,
 ) -> CouncilResult:
     bundle = _bundle(question, fresh, sim)
 
     # Stage 1 — parallel
-    stage1 = await asyncio.gather(*[_stage1_member(l, bundle) for l in LENSES])
+    stage1 = await asyncio.gather(
+        *[_stage1_member(l, bundle, horizon_labels=horizons) for l in LENSES]
+    )
 
     # Stage 2 — blind peer review (label responses A..F)
     labels = [chr(ord("A") + i) for i in range(len(stage1))]
@@ -204,7 +212,9 @@ async def run_council(
     )
 
     # Stage 3 — chairman writes the report
-    report = await _stage3_chairman(question, bundle, list(stage1), list(stage2))
+    report = await _stage3_chairman(
+        question, bundle, list(stage1), list(stage2), horizon_labels=horizons
+    )
 
     return CouncilResult(
         stage1=list(stage1), stage2=list(stage2), final_report_markdown=report

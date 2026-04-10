@@ -32,7 +32,9 @@ class PipelineResult:
     pdf_path: Path | None
 
 
-async def run_pipeline(question: str, *, skip_pdf: bool = False) -> PipelineResult:
+async def run_pipeline(
+    question: str, *, skip_pdf: bool = False, horizons: list[str] | None = None
+) -> PipelineResult:
     require_keys()
     session_id = uuid.uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -46,11 +48,13 @@ async def run_pipeline(question: str, *, skip_pdf: bool = False) -> PipelineResu
 
     print(f"[stage A] running actor simulation …")
     news_seed = (fresh.rss_brief or "") + "\n\n" + (fresh.isw_brief or "")
-    sim = await run_simulation(question, news_seed[:8000])
+    sim = await run_simulation(
+        question, news_seed[:8000], horizons=horizons
+    )
     (out_dir / "simulation.json").write_text(sim.model_dump_json(indent=2))
 
     print(f"[stage B] running 6-lens council …")
-    council = await run_council(question, fresh, sim)
+    council = await run_council(question, fresh, sim, horizons=horizons)
     (out_dir / "chairman_report.md").write_text(council.final_report_markdown)
     (out_dir / "stage1_answers.md").write_text(
         "\n\n---\n\n".join(f"# {m.lens.name}\n\n{m.answer}" for m in council.stage1)
@@ -129,5 +133,7 @@ def _render_and_publish_artifacts(out_dir: Path) -> Path | None:
     return None
 
 
-def run_pipeline_sync(question: str, *, skip_pdf: bool = False) -> PipelineResult:
-    return asyncio.run(run_pipeline(question, skip_pdf=skip_pdf))
+def run_pipeline_sync(
+    question: str, *, skip_pdf: bool = False, horizons: list[str] | None = None
+) -> PipelineResult:
+    return asyncio.run(run_pipeline(question, skip_pdf=skip_pdf, horizons=horizons))
