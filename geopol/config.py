@@ -21,6 +21,10 @@ OPENROUTER_CHAT_URL = f"{OPENROUTER_BASE_URL}/chat/completions"
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
+# ─── Pinecone ───
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX_HOST = "https://geopol-forecaster-enc8no3.svc.aped-4627-b74a.pinecone.io"
+
 # ─── Models (all the same for first run; override per role later) ───
 MODEL_DEFAULT = "anthropic/claude-sonnet-4.5"
 
@@ -43,9 +47,15 @@ HORIZON_PRESETS: dict[str, list[str]] = {
     "long": ["+1 month", "+6 months", "+5 years"],
 }
 
+# ─── Daily mode defaults ───
+DAILY_ACTORS_COUNT = 5
+DAILY_TIMESTEPS = 2
+DAILY_HORIZONS = ["+24h", "+72h"]
+
 # ─── Paths ───
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPORTS_DIR = REPO_ROOT / "reports"
+CHECKPOINT_DB = REPORTS_DIR / ".checkpoints.db"
 
 
 @dataclass

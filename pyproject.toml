@@ -13,6 +13,8 @@ dependencies = [
     "feedparser>=6.0",
     "tavily-python>=0.5",
     "rich>=13.7",
+    "langgraph>=0.4",
+    "langgraph-checkpoint-sqlite>=2.0",
 ]
 
 # Note: llm-snowglobe inspired the Stage A pattern but is NOT installed by

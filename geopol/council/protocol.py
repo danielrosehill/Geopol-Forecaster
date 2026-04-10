@@ -143,6 +143,7 @@ async def _stage3_chairman(
     stage1: list[CouncilMemberAnswer],
     stage2: list[CouncilPeerReview],
     horizon_labels: list[str] | None = None,
+    past_runs_context: str = "",
 ) -> str:
     horizons_str = " / ".join(horizon_labels) if horizon_labels else "24h / 72h / 2w"
     answers_blob = "\n\n".join(
@@ -173,6 +174,20 @@ Write the report in Markdown with these sections, in this order:
    confirmed each.
 
 Be concrete. Name actors. Avoid hedge-speak. Cite fresh data where possible."""
+    past_runs_section = ""
+    if past_runs_context:
+        past_runs_section = f"""
+
+# PRIOR FORECASTS ON SIMILAR TOPICS (retrieved from archive)
+{past_runs_context}
+
+Where relevant, note how the situation has evolved since these prior assessments.
+Flag any predictions from past runs that have since been confirmed or disconfirmed."""
+
+    peer_review_note = ""
+    if not stage2:
+        peer_review_note = "\n\n*(No peer review was performed for this run — daily mode.)*"
+
     user = f"""# ORIGINAL CONTEXT BUNDLE
 {bundle}
 
@@ -180,7 +195,7 @@ Be concrete. Name actors. Avoid hedge-speak. Cite fresh data where possible."""
 {answers_blob}
 
 # STAGE 2 — BLIND PEER REVIEWS
-{reviews_blob}
+{reviews_blob}{peer_review_note}{past_runs_section}
 
 Write the final report now."""
     return await chat(

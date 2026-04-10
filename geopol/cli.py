@@ -1,12 +1,12 @@
 """Typer CLI. `uv run geopol forecast "Will the Iran-Israel ceasefire hold …?"`"""
 from __future__ import annotations
 
+import asyncio
 from typing import Optional
 
 import typer
 
 from .config import HORIZON_PRESETS
-from .pipeline import run_pipeline_sync
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -31,22 +31,42 @@ def forecast(
             "or comma-separated labels (e.g. '+1 week,+1 month,+1 year')"
         ),
     ),
+    mode: str = typer.Option(
+        "full",
+        help="Run mode: 'full' (default) or 'daily' (fewer actors, no peer review)",
+    ),
 ) -> None:
-    """Run the full Stage-A + Stage-B pipeline and emit a report directory."""
+    """Run the full forecast pipeline via LangGraph."""
+    from .graph import run_forecast
+
     labels = _resolve_horizons(horizons)
-    result = run_pipeline_sync(question, skip_pdf=skip_pdf, horizons=labels)
-    typer.echo(f"\nSession:   {result.session_id}")
-    typer.echo(f"Directory: {result.report_dir}")
-    typer.echo(f"Markdown:  {result.markdown_path}")
-    if result.pdf_path:
-        typer.echo(f"PDF:       {result.pdf_path}")
+    state = asyncio.run(
+        run_forecast(question, mode=mode, horizons=labels, skip_pdf=skip_pdf)
+    )
+    typer.echo(f"\nSession:   {state['session_id']}")
+    typer.echo(f"Directory: {state['report_dir']}")
+    typer.echo(f"Report:    {state['report_dir']}/chairman_report.md")
+    if state.get("pdf_path"):
+        typer.echo(f"PDF:       {state['pdf_path']}")
+
+
+@app.command()
+def resume(
+    session_id: str = typer.Argument(..., help="Session ID of the interrupted run"),
+) -> None:
+    """Resume a previously interrupted forecast run from its last checkpoint."""
+    from .graph import resume_forecast
+
+    state = asyncio.run(resume_forecast(session_id))
+    typer.echo(f"\nResumed session: {state['session_id']}")
+    typer.echo(f"Directory:       {state['report_dir']}")
+    if state.get("pdf_path"):
+        typer.echo(f"PDF:             {state['pdf_path']}")
 
 
 @app.command()
 def smoketest() -> None:
     """Tiny smoke test — 3 actors, 2 timesteps, 1 run, no council."""
-    import asyncio
-
     from .actors import ROSTER_CORE
     from .simulation import run_simulation
 
